@@ -4,6 +4,7 @@ class MarkerModel {
     this.name,
     required this.latitude,
     required this.longitude,
+    this.status,
   });
   
   final String? name;

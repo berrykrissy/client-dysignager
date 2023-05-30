@@ -3,8 +3,15 @@ import 'package:billboard/models/marker_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:video_player/video_player.dart';
 
 class ScreenController extends BaseController {
+
+  ScreenController() {
+    debugPrint("ScreenController Constructor");
+  }
+
+  Rx<VideoPlayerController?> videoPlayerController = null.obs;
 
   @override
   Future<void> onInit() async {
@@ -12,6 +19,10 @@ class ScreenController extends BaseController {
     debugPrint("ScreenController onInit");
     debugPrint("ScreenController GetCoordinates() ${await _GetCoordinates()}");
     //TODO Send Coordinates to Admin and Send Status 
+    videoPlayerController = VideoPlayerController.asset("assets/video.mp4").obs;
+    videoPlayerController.value?.initialize();
+    videoPlayerController.value?.setLooping(false);
+    debugPrint("ScreenController videoPlayerController ${videoPlayerController.value?.value}");
   }
 
    Future<bool> _handleLocationPermission() async {
@@ -47,6 +58,10 @@ class ScreenController extends BaseController {
     }
   }
 
+  VideoPlayerController? observeVideoPlayer() {
+    return videoPlayerController.value;
+  }
+
   @override
   void onReady() {
     super.onReady();
@@ -57,5 +72,6 @@ class ScreenController extends BaseController {
   void onClose() {
     debugPrint("ScreenController onClose");
     super.onClose();
+    videoPlayerController.value?.dispose();
   }
 }

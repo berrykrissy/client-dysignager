@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:billboard/controllers/base_controller.dart';
 import 'package:billboard/models/marker_model.dart';
 import 'package:flutter/foundation.dart';
@@ -11,21 +12,19 @@ class ScreenController extends BaseController {
     debugPrint("ScreenController Constructor");
   }
 
-  Rx<VideoPlayerController?> videoPlayerController = null.obs;
+  RxBool isVideo = false.obs;
+  late VideoPlayerController? videoPlayerController;
 
   @override
   Future<void> onInit() async {
     super.onInit();
     debugPrint("ScreenController onInit");
-    debugPrint("ScreenController GetCoordinates() ${await _GetCoordinates()}");
-    //TODO Send Coordinates to Admin and Send Status 
-    videoPlayerController = VideoPlayerController.asset("assets/video.mp4").obs;
-    videoPlayerController.value?.initialize();
-    videoPlayerController.value?.setLooping(false);
-    debugPrint("ScreenController videoPlayerController ${videoPlayerController.value?.value}");
+    debugPrint("ScreenController GetCoordinates() ${await _getCoordinates()}");
+    //TODO Send Coordinates to Admin and Send Status
+    setVideo('assets/video.mp4');
   }
 
-   Future<bool> _handleLocationPermission() async {
+  Future<bool> _handleLocationPermission() async {
     bool serviceEnabled;
     LocationPermission permission;
     
@@ -49,7 +48,7 @@ class ScreenController extends BaseController {
     return true;
   }
 
-  Future<MarkerModel?> _GetCoordinates() async {
+  Future<MarkerModel?> _getCoordinates() async {
     if(await _handleLocationPermission()) {
       Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       return MarkerModel(latitude: position.latitude, longitude: position.longitude);
@@ -58,20 +57,50 @@ class ScreenController extends BaseController {
     }
   }
 
-  VideoPlayerController? observeVideoPlayer() {
-    return videoPlayerController.value;
+  void setVideo(String source) {
+    debugPrint("ScreenController setVideo($source)");
+    videoPlayerController = VideoPlayerController.asset(source);
+    videoPlayerController?..addListener( () {
+      debugPrint("ScreenController Listener isInitialized ${videoPlayerController?.value.isInitialized}");
+      debugPrint("ScreenController Listener isPlaying ${videoPlayerController?.value.isPlaying}");
+      debugPrint("ScreenController Listener duration  ${videoPlayerController?.value.duration }");
+      debugPrint("ScreenController Listener position ${videoPlayerController?.value.position}");
+      if (videoPlayerController?.value.isInitialized == true && videoPlayerController?.value.isPlaying == false && videoPlayerController?.value.position == videoPlayerController?.value.duration) {
+          isVideo(false);
+      } else {
+          isVideo(true);
+      }
+    } )
+    ..setLooping(false)
+    ..initialize().then((value) {
+      debugPrint("ScreenController initialize ${videoPlayerController?.value}");
+      return videoPlayerController?.play();
+    },);
+  }
+
+  bool isVieoMuted() {
+    return videoPlayerController?.value.volume == 0;
+  }
+
+  RxBool observeIsVideo() {
+    return isVideo;
   }
 
   @override
   void onReady() {
     super.onReady();
     debugPrint("ScreenController onReady");
+    /*
+    Timer(Duration(milliseconds: 5000), () {
+  
+     } );
+     */
   }
 
   @override
   void onClose() {
     debugPrint("ScreenController onClose");
     super.onClose();
-    videoPlayerController.value?.dispose();
+    videoPlayerController?.dispose();
   }
 }

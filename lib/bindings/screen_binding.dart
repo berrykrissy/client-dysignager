@@ -8,6 +8,10 @@ class ScreenBinding extends BaseBinding {
   @override
   void dependencies() {
     debugPrint("SplashBinding dependencies");
-    Get.lazyPut<ScreenController> ( () => ScreenController());
+    Get.lazyPut<ScreenController> ( 
+      () => ScreenController(
+        
+      )
+    );
   }
 }

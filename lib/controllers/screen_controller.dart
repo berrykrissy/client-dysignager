@@ -4,6 +4,7 @@ import 'package:billboard/models/marker_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:socket_io_client/socket_io_client.dart' as Client;
 import 'package:video_player/video_player.dart';
 
 class ScreenController extends BaseController {
@@ -12,6 +13,7 @@ class ScreenController extends BaseController {
     debugPrint("ScreenController Constructor");
   }
 
+  final Client.Socket socket = Client.io("http://localhost:3000");
   RxBool isVideo = false.obs;
   late VideoPlayerController? videoPlayerController;
 
@@ -22,6 +24,18 @@ class ScreenController extends BaseController {
     debugPrint("ScreenController GetCoordinates() ${await _getCoordinates()}");
     //TODO Send Coordinates to Admin and Send Status
     setVideo('assets/video.mp4');
+    socket.on('connect', (data) {
+      debugPrint("ScreenController connect");
+      socket.emit('msg', 'test');
+    } );
+    socket.on('event', (data) => debugPrint(data));
+    socket.on('disconnect', (disconnect) {
+      debugPrint('ScreenController disconnect');
+    } );
+    socket.on('fromServer', (fromServer) {
+      debugPrint('ScreenController $fromServer');
+    } );
+
   }
 
   Future<bool> _handleLocationPermission() async {
@@ -90,11 +104,9 @@ class ScreenController extends BaseController {
   void onReady() {
     super.onReady();
     debugPrint("ScreenController onReady");
-    /*
     Timer(Duration(milliseconds: 5000), () {
-  
-     } );
-     */
+      //_client.write("Hellow World");
+    } );
   }
 
   @override

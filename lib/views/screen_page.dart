@@ -3,7 +3,6 @@ import 'package:billboard/views/base_view.dart';
 import 'package:billboard/widgets/video_player_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:video_player/video_player.dart';
 
 class ScreenPage extends BaseView<ScreenController> {
 

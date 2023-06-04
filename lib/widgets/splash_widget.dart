@@ -15,18 +15,7 @@ class SplashWidget extends BaseWidget<SplashController> {
       child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const FlutterLogo(
-            size: 100,
-            style: FlutterLogoStyle.markOnly,
-          ),
-          const Text(
-            'Flutter App', 
-            style: TextStyle(
-              fontSize: 20, 
-              fontWeight: FontWeight.bold, 
-              color: Colors.indigo
-            ),
-            )
+          Image.asset("assets/DYSIGNAGER.webp"),
         ],
       ),),
     ),

@@ -106,9 +106,11 @@ class ScreenController extends BaseController {
   void onReady() {
     super.onReady();
     debugPrint("ScreenController onReady");
-    Timer(Duration(milliseconds: 5000), () {
+    /*
+    Timer(const Duration(milliseconds: 5000), () {
       //_client.write("Hellow World");
     } );
+    */
   }
 
   @override

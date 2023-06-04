@@ -80,8 +80,10 @@ class ScreenController extends BaseController {
       debugPrint("ScreenController Listener duration  ${videoPlayerController?.value.duration }");
       debugPrint("ScreenController Listener position ${videoPlayerController?.value.position}");
       if (videoPlayerController?.value.isInitialized == true && videoPlayerController?.value.isPlaying == false && videoPlayerController?.value.position == videoPlayerController?.value.duration) {
+        debugPrint("ScreenController Listener duration isVideo(false)");
           isVideo(false);
       } else {
+        debugPrint("ScreenController Listener duration isVideo(true)");
           isVideo(true);
       }
     } )

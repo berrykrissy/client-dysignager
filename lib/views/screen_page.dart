@@ -5,20 +5,24 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ScreenPage extends BaseView<ScreenController> {
-
   const ScreenPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    controller.processLocationDetails();
     debugPrint("ScreenPage build");
     debugPrint("ScreenPage initialized ${controller.initialized}");
     debugPrint("ScreenPage isClosed ${controller.isClosed}");
-    return Obx( () {
-      if (controller.observeIsVideo().isTrue) {
-        return VideoPlayerWidget(videoController: controller.videoPlayerController,);
-      } else {
-       return Image.asset("assets/image.jpg");
-      }
-    }, );
+    return Obx(
+      () {
+        if (controller.observeIsVideo().isTrue) {
+          return VideoPlayerWidget(
+            videoController: controller.videoPlayerController,
+          );
+        } else {
+          return Image.asset("assets/image.jpg");
+        }
+      },
+    );
   }
 }

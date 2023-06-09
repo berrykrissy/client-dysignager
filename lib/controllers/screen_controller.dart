@@ -149,7 +149,7 @@ class ScreenController extends BaseController {
     debugPrint("ScreenController _getAdvertisements ${advertisements.length}");
     index = 0;
     Timer.periodic (
-      const Duration(seconds: 10), (timer) {
+      const Duration(seconds: 30), (timer) {
         debugPrint("ScreenController tick ${timer.tick}");
         _isLoading(true);
         /*
@@ -162,15 +162,15 @@ class ScreenController extends BaseController {
           index = 0;
         }
         if (advertisements.value[index].mediaType?.toLowerCase()?.contains("jpg") == true || advertisements.value[index].mediaType?.contains("png") == true || advertisements.value[index].mediaType?.toLowerCase()?.contains("webp") == true) {
-          
           url(advertisements?.value[index]?.mediaUrl);
           _isVideo(false);
           videoPlayerController?.pause();
         } else {
+          videoPlayerController?.dispose;
            url(advertisements?.value[index]?.mediaUrl);
           _isVideo(true);
           setVideoNetwork(advertisements.value[index].mediaUrl ?? "");
-          //videoPlayerController?.play();
+          videoPlayerController?.play();
         }
         debugPrint("ScreenController index ${index} advertisement ${advertisements.value[index].duration} ${advertisements.value[index].mediaType} ${advertisements.value[index].mediaUrl}");
         index++;

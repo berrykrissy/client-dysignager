@@ -88,10 +88,10 @@ class ScreenController extends BaseController {
         videoPlayerController?.value.position ==
         videoPlayerController?.value.duration) {
         debugPrint("ScreenController Listener duration isVideo(false)");
-        _isLoading(false);
+        _isLoading(true);
       } else {
         debugPrint("ScreenController Listener duration isVideo(true)");
-        _isLoading(true);
+        _isLoading(false);
       }
     } )
     ..setLooping(false)
@@ -115,10 +115,10 @@ class ScreenController extends BaseController {
         videoPlayerController?.value.position ==
         videoPlayerController?.value.duration) {
         debugPrint("ScreenController Listener duration isVideo(false)");
-        _isLoading(false);
+        _isLoading(true);
       } else {
         debugPrint("ScreenController Listener duration isVideo(true)");
-        _isLoading(true);
+        _isLoading(false);
       }
     } )
     ..setLooping(false)
@@ -149,7 +149,7 @@ class ScreenController extends BaseController {
     debugPrint("ScreenController _getAdvertisements ${advertisements.length}");
     index = 0;
     Timer.periodic (
-      const Duration(seconds: 30), (timer) {
+      const Duration(seconds: 10), (timer) {
         debugPrint("ScreenController tick ${timer.tick}");
         _isLoading(true);
         /*

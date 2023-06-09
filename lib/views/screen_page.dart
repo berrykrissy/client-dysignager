@@ -9,7 +9,6 @@ class ScreenPage extends BaseView<ScreenController> {
 
   @override
   Widget build(BuildContext context) {
-    controller.processLocationDetails();
     debugPrint("ScreenPage build");
     debugPrint("ScreenPage initialized ${controller.initialized}");
     debugPrint("ScreenPage isClosed ${controller.isClosed}");

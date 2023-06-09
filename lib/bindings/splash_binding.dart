@@ -8,6 +8,8 @@ class SplashBinding extends BaseBinding {
   @override
   void dependencies() {
     debugPrint("SplashBinding dependencies");
-    Get.lazyPut<SplashController> ( () => SplashController());
+    Get.lazyPut<SplashController> ( 
+      () => SplashController()
+    );
   }
 }

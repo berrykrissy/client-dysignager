@@ -89,6 +89,7 @@ class ScreenController extends BaseController {
         videoPlayerController?.value.duration) {
         debugPrint("ScreenController Listener duration isVideo(false)");
         _isLoading(true);
+        _nextAdvertisement();
       } else {
         debugPrint("ScreenController Listener duration isVideo(true)");
         _isLoading(false);
@@ -118,6 +119,7 @@ class ScreenController extends BaseController {
         videoPlayerController?.value.duration) {
         debugPrint("ScreenController Listener duration isVideo(false)");
         _isLoading(true);
+        _nextAdvertisement();
       } else {
         debugPrint("ScreenController Listener duration isVideo(true)");
         _isLoading(false);
@@ -162,25 +164,30 @@ class ScreenController extends BaseController {
           debugPrint("ScreenController tick timer.tick % 30 == 0 index $index");
         }
         */
-        if (advertisements.length - 1 < index) {
-          index = 0;
-        }
-        if (advertisements.value[index].mediaType?.toLowerCase()?.contains("jpg") == true || advertisements.value[index].mediaType?.contains("png") == true || advertisements.value[index].mediaType?.toLowerCase()?.contains("webp") == true) {
-          url(advertisements?.value[index]?.mediaUrl);
-          _isVideo(false);
-          videoPlayerController?.pause();
-        } else {
-          videoPlayerController?.dispose;
-           url(advertisements?.value[index]?.mediaUrl);
-          _isVideo(true);
-          setVideoNetwork(advertisements.value[index].mediaUrl ?? "");
-          videoPlayerController?.play();
-        }
-        debugPrint("ScreenController index ${index} advertisement ${advertisements.value[index].duration} ${advertisements.value[index].mediaType} ${advertisements.value[index].mediaUrl}");
-        index++;
+        _nextAdvertisement();
         _isLoading(false);
       }
     );
+  }
+
+  Future<void> _nextAdvertisement() async {
+    debugPrint("ScreenController _nextAdvertisement()");
+    if (advertisements.length - 1 < index) {
+      index = 0;
+    }
+    if (advertisements.value[index].mediaType?.toLowerCase()?.contains("jpg") == true || advertisements.value[index].mediaType?.contains("png") == true || advertisements.value[index].mediaType?.toLowerCase()?.contains("webp") == true) {
+      url(advertisements?.value[index]?.mediaUrl);
+      _isVideo(false);
+      videoPlayerController?.pause();
+    } else {
+      videoPlayerController?.dispose;
+        url(advertisements?.value[index]?.mediaUrl);
+      _isVideo(true);
+      setVideoNetwork(advertisements.value[index].mediaUrl ?? "");
+      videoPlayerController?.play();
+    }
+    debugPrint("ScreenController index ${index} advertisement ${advertisements.value[index].duration} ${advertisements.value[index].mediaType} ${advertisements.value[index].mediaUrl}");
+    index++;
   }
 
   @override

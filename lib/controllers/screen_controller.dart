@@ -97,6 +97,8 @@ class ScreenController extends BaseController {
     ..setLooping(false)
     ..initialize().then( (value) {
       debugPrint("ScreenController initialize ${videoPlayerController?.value}");
+      _isLoading(true);
+      _isLoading(false);
       return videoPlayerController?.play();
     },
     );
@@ -124,6 +126,8 @@ class ScreenController extends BaseController {
     ..setLooping(false)
     ..initialize().then( (value) {
       debugPrint("ScreenController initialize ${videoPlayerController?.value}");
+      _isLoading(true);
+      _isLoading(false);
       return videoPlayerController?.play();
     },
     );

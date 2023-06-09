@@ -18,10 +18,13 @@ class ScreenPage extends BaseView<ScreenController> {
     debugPrint("ScreenPage isClosed ${controller.isClosed}");
     return Obx ( () {
       if (controller.observeLoading().isFalse && controller.observeIsVideo().isTrue) {
+        //return Text(controller.url.toString());
         return VideoPlayerWidget (
           videoController: controller.videoPlayerController,
+          isLoading: controller.observeLoading(),
         );
       } else if (controller.observeLoading().isFalse && controller.observeIsVideo().isFalse) {
+        //return Text(controller.url.toString());
         return ImageWidget (
           url: controller.url.value
         );

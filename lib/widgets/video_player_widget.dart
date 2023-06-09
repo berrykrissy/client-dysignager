@@ -8,14 +8,16 @@ class VideoPlayerWidget extends BaseWidget {
   const VideoPlayerWidget( {
     super.key,
     this.videoController,
+    this.isLoading,
   } );
 
   final VideoPlayerController? videoController;
+  final RxBool? isLoading;
 
   @override
   Widget build(BuildContext context) {
-    //return Obx ( () {
-      if (videoController != null && videoController?.value.isInitialized == true) {
+    return Obx ( () {
+      if (isLoading?.isFalse == true && videoController != null && videoController?.value.isInitialized == true) {
         return AspectRatio (
             aspectRatio: videoController?.value.aspectRatio ?? 0.00,
             child: VideoPlayer(videoController!),
@@ -26,6 +28,6 @@ class VideoPlayerWidget extends BaseWidget {
           child: Center(child: CircularProgressIndicator()),
         );
       }
-    //},);
+    },);
   }
 }

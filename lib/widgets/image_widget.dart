@@ -16,12 +16,10 @@ class ImageWidget extends BaseWidget {
     return Image.network (
       url ?? "",
       fit: BoxFit.cover,
-      height: 200,
-      width: 200,
       alignment: Alignment.center,
       errorBuilder: ( (context, error, stackTrace) {
-        debugPrint("ImageWidget errorBuilder ${error} ${stackTrace}");
-        return const Icon(
+        debugPrint("ImageWidget errorBuilder ${error.toString()} ${stackTrace.toString()}");
+        return const Icon (
           Icons.broken_image,
           color: Colors.red,
           size: 30.0,

@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+//import 'package:mac_address/mac_address.dart';
 import 'package:video_player/video_player.dart';
 
 class ScreenController extends BaseController {
@@ -30,7 +31,8 @@ class ScreenController extends BaseController {
   @override
   Future<void> onInit() async {
     super.onInit();
-    debugPrint("ScreenController onInit");
+    debugPrint("ScreenController onInit mac address");
+    //debugPrint("ScreenController mac address "); TODO: Mac Address Still can't get
     getLocation();
     _handleLocationPermission();
     //setVideo('assets/video.mp4');
@@ -69,7 +71,8 @@ class ScreenController extends BaseController {
   }
 
   Future<void> _updateLocation(String status) async {
-    debugPrint("ScreenController _updateLocation ${await _handleLocationPermission()}");
+    //GPS Still Can't Get
+    debugPrint("ScreenController _updateLocation $status ${await _handleLocationPermission()}");
     debugPrint("ScreenController isLocationServiceEnabled ${await Geolocator.isLocationServiceEnabled()}");
     if (await _handleLocationPermission()) {
       Position position = await Geolocator.getCurrentPosition ( desiredAccuracy: LocationAccuracy.best);

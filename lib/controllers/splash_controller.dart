@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:billboard/controllers/base_controller.dart';
 import 'package:billboard/routes/app_pages.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
 class SplashController extends BaseController {
@@ -12,6 +13,31 @@ class SplashController extends BaseController {
   void onInit() {
     super.onInit();
     debugPrint("SplashController onInit");
+    _handleLocationPermission();
+  }
+
+  Future<bool> _handleLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      Get.snackbar("GPS", "Location services are disabled. Please enable the services");
+      return false;
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        Get.snackbar("GPS", "Location permissions are denied");
+        return false;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      Get.snackbar("GPS", "Location permissions are permanently denied, we cannot request permissions.");
+      return false;
+    }
+    return true;
   }
 
   @override

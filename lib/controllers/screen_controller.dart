@@ -12,12 +12,14 @@ import 'package:video_player/video_player.dart';
 
 class ScreenController extends BaseController {
   
-  ScreenController(FirestoreService this._dbService) {
+  ScreenController(FirestoreService this._service) {
     debugPrint("ScreenController Constructor");
   }
 
-  final FirestoreService _dbService;
+  final FirestoreService _service;
   final advertisements = <AdvertisementModel>[].obs;
+  LocationsModel? _locations = null;
+
   int index = 0;
 
   final RxBool _isLoading = false.obs;
@@ -29,9 +31,17 @@ class ScreenController extends BaseController {
   Future<void> onInit() async {
     super.onInit();
     debugPrint("ScreenController onInit");
+    getLocation();
     _handleLocationPermission();
     //setVideo('assets/video.mp4');
     _getAdvertisements();
+  }
+
+  Future<void> getLocation() async {
+    debugPrint("ScreenController getLocation");
+    final snapshot = await _service.getLocationsByIdByCity("Manila");
+    _locations = snapshot.firstOrNull;
+    debugPrint("ScreenController getLocation $_locations");
   }
 
   Future<bool> _handleLocationPermission() async {
@@ -58,20 +68,32 @@ class ScreenController extends BaseController {
     return true;
   }
 
-  Future<void> _updateLocation(String id, String status) async {
+  Future<void> _updateLocation(String status) async {
+    debugPrint("ScreenController _updateLocation ${await _handleLocationPermission()}");
+    debugPrint("ScreenController isLocationServiceEnabled ${await Geolocator.isLocationServiceEnabled()}");
     if (await _handleLocationPermission()) {
-      Position position = await Geolocator.getCurrentPosition (
-          desiredAccuracy: LocationAccuracy.high);
-      _dbService.updateLocation (
-        id, 
+      Position position = await Geolocator.getCurrentPosition ( desiredAccuracy: LocationAccuracy.best);
+      _service.updateLocation (
+        _locations?.id, 
         LocationsModel (
-          name: "Manila",
-          address: "HXRM+4G Manila, Metro Manila",
+          name: _locations?.name,
+          address: _locations?.address,
           gps: GeoPoint(position.latitude ,position.longitude),
           onlineSince: DateTime.now().toString(),
           status: status,
         ).toMap()
-      );  
+      );
+    } else {
+      _service.updateLocation (
+        _locations?.id, 
+        LocationsModel (
+          name: _locations?.name,
+          address: _locations?.address,
+          gps: _locations?.gps,
+          onlineSince: DateTime.now().toString(),
+          status: status,
+        ).toMap()
+      );
     }
   }
 
@@ -148,7 +170,7 @@ class ScreenController extends BaseController {
   }
   
   Future<void> _getAdvertisements() async {
-    final snapshot = await _dbService.getAdvertisement();
+    final snapshot = await _service.getAdvertisement();
     for (final item in snapshot) {
       advertisements.add(item);
     }
@@ -157,6 +179,7 @@ class ScreenController extends BaseController {
     Timer.periodic (
       const Duration(seconds: 30), (timer) {
         debugPrint("ScreenController tick ${timer.tick}");
+        _updateLocation(Constants.ONLINE);
         _isLoading(true);
         /*
         if (timer.tick % 30 == 0) {
@@ -194,7 +217,9 @@ class ScreenController extends BaseController {
   Future<void> onReady() async {
     super.onReady();
     debugPrint("ScreenController onReady");
-    _updateLocation("LvreLbzIGD1MlR2yQyPq", Constants.ONLINE);
+    //NetWorkInfo netWorkInfo = NetworkInfo();
+    //debugPrint("ScreenController MAC Address ${await }");
+    _updateLocation(Constants.ONLINE);
   }
 
   @override
@@ -202,6 +227,6 @@ class ScreenController extends BaseController {
     super.onClose();
     debugPrint("ScreenController onClose");
     videoPlayerController?.dispose();
-    _updateLocation("LvreLbzIGD1MlR2yQyPq", Constants.OFFLINE);
+    _updateLocation(Constants.OFFLINE);
   }
 }

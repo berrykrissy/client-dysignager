@@ -4,7 +4,6 @@ import 'package:billboard/services/firestore/firestore_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/route_manager.dart';
 import 'routes/app_pages.dart';
 
 Future<void> main() async {
@@ -14,7 +13,7 @@ Future<void> main() async {
   Get.put(FirestoreService());
 
   runApp(GetMaterialApp(
-    debugShowCheckedModeBanner: true,
+    debugShowCheckedModeBanner: false,
     initialBinding: SplashBinding(),
     initialRoute: Routes.SPLASH,
     theme: ThemeData(

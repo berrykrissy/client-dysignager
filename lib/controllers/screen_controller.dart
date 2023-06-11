@@ -5,7 +5,7 @@ import 'package:billboard/models/locations_model.dart';
 import 'package:billboard/services/firestore/firestore_service.dart';
 import 'package:billboard/utils/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 //import 'package:mac_address/mac_address.dart';
@@ -20,13 +20,11 @@ class ScreenController extends BaseController {
   final FirestoreService _service;
   final advertisements = <AdvertisementModel>[].obs;
   LocationsModel? _locations = null;
+  PageController pageController = new PageController(initialPage: 0);
 
   int index = 0;
-
-  final RxBool _isLoading = false.obs;
-  final RxBool _isVideo = false.obs;
-  final RxString url = "".obs;
-  VideoPlayerController? videoPlayerController = null;
+ 
+  final RxBool isLoading = false.obs;
 
   @override
   Future<void> onInit() async {
@@ -71,9 +69,10 @@ class ScreenController extends BaseController {
   }
 
   Future<void> _updateLocation(String status) async {
-    //GPS Still Can't Get
+    //TODO GPS Still Can't Get
     debugPrint("ScreenController _updateLocation $status ${await _handleLocationPermission()}");
     debugPrint("ScreenController isLocationServiceEnabled ${await Geolocator.isLocationServiceEnabled()}");
+    /*
     if (await _handleLocationPermission()) {
       Position position = await Geolocator.getCurrentPosition ( desiredAccuracy: LocationAccuracy.best);
       _service.updateLocation (
@@ -98,11 +97,12 @@ class ScreenController extends BaseController {
         ).toMap()
       );
     }
+    */
   }
 
-  void setVideoAsset(String source) {
-    debugPrint("ScreenController setVideoAsset($source)");
-    videoPlayerController = VideoPlayerController.asset(source);
+  VideoPlayerController getVideoNetwork(RxBool isVideoLoading, String source) {
+    debugPrint("ScreenController getVideoNetwork($source)");
+    final videoPlayerController = VideoPlayerController.network(source); //VideoPlayerController.asset(source);
     videoPlayerController?..addListener( () {
       debugPrint("ScreenController Listener isInitialized ${videoPlayerController?.value.isInitialized}");
       debugPrint("ScreenController Listener isPlaying ${videoPlayerController?.value.isPlaying}");
@@ -113,77 +113,46 @@ class ScreenController extends BaseController {
         videoPlayerController?.value.position ==
         videoPlayerController?.value.duration) {
         debugPrint("ScreenController Listener duration isVideo(false)");
-        _isLoading(true);
+        isVideoLoading(true);
         _nextAdvertisement();
       } else {
         debugPrint("ScreenController Listener duration isVideo(true)");
-        _isLoading(false);
+        isVideoLoading(false);
       }
     } )
     ..setLooping(false)
     ..initialize().then( (value) {
-      debugPrint("ScreenController initialize ${videoPlayerController?.value}");
-      _isLoading(true);
-      _isLoading(false);
-      return videoPlayerController?.play();
-    },
+        debugPrint("ScreenController initialize ${videoPlayerController?.value}");
+        isVideoLoading(true);
+        isVideoLoading(false);
+        return videoPlayerController?.play();
+      },
     );
-  }
-
-  void setVideoNetwork(String source) {
-    debugPrint("ScreenController setVideoNetwork($source)");
-    videoPlayerController = VideoPlayerController.network(source);
-    videoPlayerController?..addListener( () {
-      debugPrint("ScreenController Listener isInitialized ${videoPlayerController?.value.isInitialized}");
-      debugPrint("ScreenController Listener isPlaying ${videoPlayerController?.value.isPlaying}");
-      debugPrint("ScreenController Listener duration  ${videoPlayerController?.value.duration}");
-      debugPrint("ScreenController Listener position ${videoPlayerController?.value.position}");
-      if (videoPlayerController?.value.isInitialized == true &&
-        videoPlayerController?.value.isPlaying == false &&
-        videoPlayerController?.value.position ==
-        videoPlayerController?.value.duration) {
-        debugPrint("ScreenController Listener duration isVideo(false)");
-        _isLoading(true);
-        _nextAdvertisement();
-      } else {
-        debugPrint("ScreenController Listener duration isVideo(true)");
-        _isLoading(false);
-      }
-    } )
-    ..setLooping(false)
-    ..initialize().then( (value) {
-      debugPrint("ScreenController initialize ${videoPlayerController?.value}");
-      _isLoading(true);
-      _isLoading(false);
-      return videoPlayerController?.play();
-    },
-    );
-  }
-
-  bool isVideoMuted() {
-    return videoPlayerController?.value.volume == 0;
-  }
-
-  RxBool observeLoading() {
-    return _isLoading;
-  }
-
-  RxBool observeIsVideo() {
-    return _isVideo;
+    return videoPlayerController;
   }
   
   Future<void> _getAdvertisements() async {
+    debugPrint("ScreenController _getAdvertisements()"); 
+    isLoading(true);
+    advertisements.clear();
     final snapshot = await _service.getAdvertisement();
     for (final item in snapshot) {
-      advertisements.add(item);
+      if (item.mediaType?.toLowerCase()?.contains("mp4") == true) {
+        item.isVideoLoading = false.obs;
+        item.videoPlayerController = getVideoNetwork(item.isVideoLoading!, item.mediaUrl!);
+        advertisements.add(item);
+      } else {
+        advertisements.add(item);
+      }
+      
     }
     debugPrint("ScreenController _getAdvertisements ${advertisements.length}");
+    debugPrint("ScreenController _getAdvertisements ${advertisements}"); 
     index = 0;
     Timer.periodic (
       const Duration(seconds: 30), (timer) {
         debugPrint("ScreenController tick ${timer.tick}");
         _updateLocation(Constants.ONLINE);
-        _isLoading(true);
         /*
         if (timer.tick % 30 == 0) {
           index++;
@@ -191,28 +160,27 @@ class ScreenController extends BaseController {
         }
         */
         _nextAdvertisement();
-        _isLoading(false);
       }
     );
+    isLoading(false);
   }
 
   Future<void> _nextAdvertisement() async {
     debugPrint("ScreenController _nextAdvertisement()");
+    advertisements.value[index].videoPlayerController?.pause();
     if (advertisements.length - 1 < index) {
       index = 0;
     }
     if (advertisements.value[index].mediaType?.toLowerCase()?.contains("jpg") == true || advertisements.value[index].mediaType?.contains("png") == true || advertisements.value[index].mediaType?.toLowerCase()?.contains("webp") == true) {
-      url(advertisements?.value[index]?.mediaUrl);
-      _isVideo(false);
-      videoPlayerController?.pause();
+      debugPrint("ScreenController _nextAdvertisement() is Image");
     } else {
-      videoPlayerController?.dispose;
-        url(advertisements?.value[index]?.mediaUrl);
-      _isVideo(true);
-      setVideoNetwork(advertisements.value[index].mediaUrl ?? "");
-      videoPlayerController?.play();
+      debugPrint("ScreenController _nextAdvertisement() is Video");
+      //videoPlayerController?.dispose;  
+      advertisements.value[index].videoPlayerController?.initialize();
+      advertisements.value[index].videoPlayerController?.play();
     }
     debugPrint("ScreenController index ${index} advertisement ${advertisements.value[index].duration} ${advertisements.value[index].mediaType} ${advertisements.value[index].mediaUrl}");
+    pageController.jumpToPage(index);
     index++;
   }
 
@@ -229,7 +197,9 @@ class ScreenController extends BaseController {
   void onClose() {
     super.onClose();
     debugPrint("ScreenController onClose");
-    videoPlayerController?.dispose();
+    advertisements.map( (element) {
+      element.videoPlayerController?.dispose();
+    } );
     _updateLocation(Constants.OFFLINE);
   }
 }

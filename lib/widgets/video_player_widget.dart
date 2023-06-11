@@ -23,10 +23,7 @@ class VideoPlayerWidget extends BaseWidget {
             child: VideoPlayer(videoController!),
           );
       } else {
-        return const SizedBox (
-          height: 200,
-          child: Center(child: CircularProgressIndicator()),
-        );
+        return const Center( child: CircularProgressIndicator() );
       }
     },);
   }

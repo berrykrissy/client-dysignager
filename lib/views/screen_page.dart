@@ -1,6 +1,7 @@
 import 'package:billboard/controllers/screen_controller.dart';
 import 'package:billboard/views/base_view.dart';
 import 'package:billboard/widgets/image_widget.dart';
+import 'package:billboard/widgets/page_view_widget.dart';
 import 'package:billboard/widgets/video_player_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,6 +17,28 @@ class ScreenPage extends BaseView<ScreenController> {
     debugPrint("ScreenPage build");
     debugPrint("ScreenPage initialized ${controller.initialized}");
     debugPrint("ScreenPage isClosed ${controller.isClosed}");
+    return Obx ( () {
+      if (controller.isLoading.isTrue) {
+        return const Center( child: CircularProgressIndicator() );
+      } else {
+        return PageViewWidget (
+          canScroll: true,
+          pageController: controller.pageController,
+          isLoading: controller.isLoading,
+          widgets: controller.advertisements.map((cell) {
+            if(cell.mediaType?.toLowerCase().contains("mp4") == true) {
+              return VideoPlayerWidget (
+                videoController: cell.videoPlayerController,
+                isLoading: cell.isVideoLoading,
+              );
+            } else {
+              return ImageWidget(url: cell.mediaUrl);
+            }
+          } ).toList()
+        );
+      }
+    });
+    /*
     return Obx ( () {
       if (controller.observeLoading().isFalse && controller.observeIsVideo().isTrue) {
         //return Text(controller.url.toString());
@@ -35,5 +58,6 @@ class ScreenPage extends BaseView<ScreenController> {
         );
       }
     }, );
+    */
   }
 }

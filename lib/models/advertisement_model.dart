@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
+import 'package:video_player/video_player.dart';
 
 class AdvertisementModel {
   String? id; //documentID
@@ -9,8 +11,10 @@ class AdvertisementModel {
   DateTime? startDate;
   DateTime? endDate;
   int? duration;
+  RxBool? isVideoLoading;
+  VideoPlayerController? videoPlayerController;
 
-  AdvertisementModel( {
+  AdvertisementModel ( {
     this.id,
     this.client,
     this.mediaName,
@@ -19,6 +23,8 @@ class AdvertisementModel {
     this.startDate,
     this.endDate,
     this.duration,
+    this.isVideoLoading,
+    this.videoPlayerController,
   } );
 
   Map<String, dynamic> toMap() => {
@@ -39,8 +45,8 @@ class AdvertisementModel {
     mediaName = data['mediaName'];
     mediaUrl = data['mediaUrl'];
     mediaType = data['mediaType'];
-    startDate = (data['startDate'] as Timestamp).toDate();
-    endDate = (data['endDate'] as Timestamp).toDate();
+    startDate = ( data['startDate'] as Timestamp ).toDate();
+    endDate = ( data['endDate'] as Timestamp ).toDate();
     duration = data['duration'];
   }
 
@@ -51,8 +57,8 @@ class AdvertisementModel {
     mediaName = json['mediaName'];
     mediaType = json['mediaType'];
     mediaUrl = json['mediaUrl'];
-    startDate = (json['startDate'] as Timestamp).toDate();
-    endDate = (json['endDate'] as Timestamp).toDate();
+    startDate = ( json['startDate'] as Timestamp ).toDate();
+    endDate = ( json['endDate'] as Timestamp ).toDate();
     duration = json['duration'];
   }
 }

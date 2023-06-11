@@ -4,7 +4,6 @@ import 'package:billboard/models/advertisement_model.dart';
 import 'package:billboard/models/locations_model.dart';
 import 'package:billboard/services/firestore/firestore_service.dart';
 import 'package:billboard/utils/constants.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -21,9 +20,7 @@ class ScreenController extends BaseController {
   final advertisements = <AdvertisementModel>[].obs;
   LocationsModel? _locations = null;
   PageController pageController = new PageController(initialPage: 0);
-
   int index = 0;
- 
   final RxBool isLoading = false.obs;
 
   @override
@@ -35,6 +32,34 @@ class ScreenController extends BaseController {
     _handleLocationPermission();
     //setVideo('assets/video.mp4');
     _getAdvertisements();
+    pageController.addListener(() {
+      debugPrint("ScreenController pageController page ${pageController.page}");
+      final isPageNotNull = pageController.page?.toInt() != null;
+      final past = pageController.page!.toInt() - 1;
+      if (isPageNotNull && -1 < past ) {
+        debugPrint("ScreenController pageController pause $past");
+        advertisements.value[advertisements.length - 1].videoPlayerController?.pause();
+      } else if (isPageNotNull) {
+        debugPrint("ScreenController pageController pause ${advertisements.length - 1}");
+        advertisements.value[advertisements.length - 1].videoPlayerController?.pause();
+      }
+      final present = pageController.page!.toInt();
+      if (isPageNotNull && present < advertisements.length) {
+        debugPrint("ScreenController pageController play $present");
+        advertisements.value[present].videoPlayerController?.play();
+      } else if (isPageNotNull && advertisements.isNotEmpty) {
+        debugPrint("ScreenController pageController play 0");
+        advertisements.value[0].videoPlayerController?.play();
+      }
+      final future = pageController.page!.toInt() + 1;
+      if (isPageNotNull && future < advertisements.length) {
+        debugPrint("ScreenController pageController initialize $future");
+        advertisements.value[future].videoPlayerController?.initialize();
+      } else if (isPageNotNull && advertisements.isNotEmpty) {
+        debugPrint("ScreenController pageController initialize 0");
+        advertisements.value[0].videoPlayerController?.initialize();
+      }
+    });
   }
 
   Future<void> getLocation() async {
@@ -123,9 +148,9 @@ class ScreenController extends BaseController {
     ..setLooping(false)
     ..initialize().then( (value) {
         debugPrint("ScreenController initialize ${videoPlayerController?.value}");
-        isVideoLoading(true);
-        isVideoLoading(false);
-        return videoPlayerController?.play();
+        //isVideoLoading(true);
+        //isVideoLoading(false);
+        //return videoPlayerController?.play();
       },
     );
     return videoPlayerController;
@@ -167,21 +192,23 @@ class ScreenController extends BaseController {
 
   Future<void> _nextAdvertisement() async {
     debugPrint("ScreenController _nextAdvertisement()");
-    advertisements.value[index].videoPlayerController?.pause();
-    if (advertisements.length - 1 < index) {
-      index = 0;
-    }
+    /*
     if (advertisements.value[index].mediaType?.toLowerCase()?.contains("jpg") == true || advertisements.value[index].mediaType?.contains("png") == true || advertisements.value[index].mediaType?.toLowerCase()?.contains("webp") == true) {
       debugPrint("ScreenController _nextAdvertisement() is Image");
     } else {
       debugPrint("ScreenController _nextAdvertisement() is Video");
-      //videoPlayerController?.dispose;  
+      videoPlayerController?.dispose;  
       advertisements.value[index].videoPlayerController?.initialize();
       advertisements.value[index].videoPlayerController?.play();
     }
+    */
     debugPrint("ScreenController index ${index} advertisement ${advertisements.value[index].duration} ${advertisements.value[index].mediaType} ${advertisements.value[index].mediaUrl}");
     pageController.jumpToPage(index);
-    index++;
+    if (index < advertisements.length - 1) {
+      index++;
+    } else {
+      index = 0;
+    }
   }
 
   @override

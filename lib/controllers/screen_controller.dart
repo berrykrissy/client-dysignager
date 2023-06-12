@@ -242,7 +242,7 @@ class ScreenController extends BaseController {
       _updateLocation(Constants.ONLINE);
     } else {
       _updateLocation(Constants.OUT_OF_SYNC);
-      onRefresh();
+      //onRefresh();
     }
   }
 

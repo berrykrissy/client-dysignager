@@ -76,7 +76,7 @@ class ScreenController extends BaseController {
 
   void onRefresh() {
     Timer (
-      const Duration(milliseconds: 3000), ( () => html.window.location.reload() )
+      const Duration(milliseconds: 10000), ( () => html.window.location.reload() )
     );
   }
 
@@ -242,7 +242,7 @@ class ScreenController extends BaseController {
       _updateLocation(Constants.ONLINE);
     } else {
       _updateLocation(Constants.OUT_OF_SYNC);
-      //onRefresh();
+      onRefresh();
     }
   }
 

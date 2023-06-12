@@ -120,11 +120,8 @@ class ScreenController extends BaseController {
   Future<void> _updateLocation(String status) async {
     //TODO GPS Still Can't Get in Rasbian OS
     debugPrint("ScreenController _updateLocation $status");
-    //debugPrint("ScreenController _handleLocationPermission ${await _handleLocationPermission()} isLocationServiceEnabled ${await Geolocator.isLocationServiceEnabled()}");
-    if (await _handleLocationPermission()) {
+    if (await _handleLocationPermission() && false) {
       Position position = await Geolocator.getCurrentPosition ( desiredAccuracy: LocationAccuracy.best);
-      //debugPrint("ScreenController isLocationServiceEnabled ${position.latitude} ${position.longitude}");
-      //debugPrint("ScreenController DateTime.now() ${DateTime.now()}");
       _service.updateLocation (
         _locations?.id, 
         LocationsModel (

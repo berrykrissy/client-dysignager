@@ -47,10 +47,10 @@ class ScreenController extends BaseController {
       }
       final present = pageController.page!.toInt();
       if (isPageNotNull && present < advertisements.length) {
-        debugPrint("ScreenController pageController play $present");
+        debugPrint("ScreenController pageController play $present ${advertisements.value[present].mediaType}");
         advertisements.value[present].videoPlayerController?.play();
       } else if (isPageNotNull && advertisements.isNotEmpty) {
-        debugPrint("ScreenController pageController play 0");
+        debugPrint("ScreenController pageController play 0 ${advertisements.value[0].mediaType}");
         advertisements.value[0].videoPlayerController?.play();
       }
       final future = pageController.page!.toInt() + 1;
@@ -205,8 +205,8 @@ class ScreenController extends BaseController {
   }
 
   Future<void> _startAdvertisement() async {
-    debugPrint("ScreenController _getAdvertisements ${advertisements.length}");
-    debugPrint("ScreenController _getAdvertisements ${advertisements}"); 
+    debugPrint("ScreenController _startAdvertisement ${advertisements.length}");
+    debugPrint("ScreenController _startAdvertisement ${advertisements}"); 
     index = 0;
     Timer.periodic (
       const Duration(seconds: 30), (timer) {
@@ -229,10 +229,19 @@ class ScreenController extends BaseController {
   }
 
   Future<void> _checkStatus() async {
-    //TODO: Check if Advertisement is in sync
-    //if not update status to Constants.OUT_OF_SYNC
-    //else update to online
-    if (true) {
+    final snapshot = await _service.getAdvertisement();
+    final isSizeSame = snapshot.length == advertisements.length;
+    bool? sameContents = null;
+    for (var newItem in snapshot) { 
+      if (!isSizeSame || advertisements.where((oldItem) => oldItem.mediaUrl == newItem.mediaUrl ).isEmpty) {
+        sameContents = false;
+        break;
+      } else {
+        sameContents = true;
+      }
+    }
+    debugPrint("ScreenController _checkStatus isSizeSame $isSizeSame sameContents $sameContents");
+    if (isSizeSame && sameContents == true) {
       _updateLocation(Constants.ONLINE);
     } else {
       _updateLocation(Constants.OUT_OF_SYNC);

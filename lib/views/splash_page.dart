@@ -9,9 +9,6 @@ class SplashPage extends BaseView<SplashController> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("SplashPage build");
-    debugPrint("SplashPage initialized ${controller.initialized}");
-    debugPrint("SplashPage isClosed ${controller.isClosed}");
     return const Scaffold( 
         body : SplashWidget(),
     );

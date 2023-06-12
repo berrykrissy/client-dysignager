@@ -4,21 +4,24 @@ import 'package:billboard/models/advertisement_model.dart';
 import 'package:billboard/models/locations_model.dart';
 import 'package:billboard/services/firestore/firestore_service.dart';
 import 'package:billboard/utils/constants.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 //import 'package:mac_address/mac_address.dart';
+import "package:universal_html/html.dart" as html;
 import 'package:video_player/video_player.dart';
 
 class ScreenController extends BaseController {
   
-  ScreenController(FirestoreService this._service) {
+  ScreenController(FirestoreService this._service, arguments) {
     debugPrint("ScreenController Constructor");
+    _locations = arguments;
   }
 
   final FirestoreService _service;
   final advertisements = <AdvertisementModel>[].obs;
-  LocationsModel? _locations = null;
+  LocationsModel? _locations;
   PageController pageController = new PageController(initialPage: 0);
   int index = 0;
   final RxBool isLoading = false.obs;
@@ -30,7 +33,6 @@ class ScreenController extends BaseController {
     //debugPrint("ScreenController mac address "); TODO: Mac Address Still can't get
     getLocation();
     _handleLocationPermission();
-    //setVideo('assets/video.mp4');
     _getAdvertisements();
     pageController.addListener(() {
       debugPrint("ScreenController pageController page ${pageController.page}");
@@ -60,11 +62,33 @@ class ScreenController extends BaseController {
         advertisements.value[0].videoPlayerController?.initialize();
       }
     });
+    html.window.onBeforeUnload.listen((event) async {
+        debugPrint("ScreenController onBeforeUnload ${event}");
+        _updateLocation(Constants.OFFLINE);
+      });
+    html.window.onUnload.listen((event) async {
+      debugPrint("ScreenController onUnload ${event}");
+      advertisements.map( (element) {
+        element.videoPlayerController?.dispose();
+      } );
+    });
+  }
+
+  void onRefresh() {
+    Timer (
+      const Duration(milliseconds: 3000), ( () => html.window.location.reload() )
+    );
+  }
+
+  void onShowAlert(String title, String message) {
+    Timer(
+      const Duration(milliseconds: 2000), ( () => Get.snackbar(title, message) )
+    );
   }
 
   Future<void> getLocation() async {
     debugPrint("ScreenController getLocation");
-    final snapshot = await _service.getLocationsByIdByCity("Manila");
+    final snapshot = await _service.getLocationsByIdByCity(Constants.CITY);
     _locations = snapshot.firstOrNull;
     debugPrint("ScreenController getLocation $_locations");
   }
@@ -75,31 +99,32 @@ class ScreenController extends BaseController {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      Get.snackbar("GPS", "Location services are disabled. Please enable the services");
+      onShowAlert("GPS", "Location services are disabled. Please enable the services");
       return false;
     }
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        Get.snackbar("GPS", "Location permissions are denied");
+        onShowAlert("GPS", "Location permissions are denied");
         return false;
       }
     }
     if (permission == LocationPermission.deniedForever) {
-      Get.snackbar("GPS", "Location permissions are permanently denied, we cannot request permissions.");
+      onShowAlert("GPS", "Location permissions are permanently denied, we cannot request permissions.");
       return false;
     }
     return true;
   }
 
   Future<void> _updateLocation(String status) async {
-    //TODO GPS Still Can't Get
-    debugPrint("ScreenController _updateLocation $status ${await _handleLocationPermission()}");
-    debugPrint("ScreenController isLocationServiceEnabled ${await Geolocator.isLocationServiceEnabled()}");
-    /*
+    //TODO GPS Still Can't Get in Rasbian OS
+    debugPrint("ScreenController _updateLocation $status");
+    //debugPrint("ScreenController _handleLocationPermission ${await _handleLocationPermission()} isLocationServiceEnabled ${await Geolocator.isLocationServiceEnabled()}");
     if (await _handleLocationPermission()) {
       Position position = await Geolocator.getCurrentPosition ( desiredAccuracy: LocationAccuracy.best);
+      //debugPrint("ScreenController isLocationServiceEnabled ${position.latitude} ${position.longitude}");
+      //debugPrint("ScreenController DateTime.now() ${DateTime.now()}");
       _service.updateLocation (
         _locations?.id, 
         LocationsModel (
@@ -108,6 +133,7 @@ class ScreenController extends BaseController {
           gps: GeoPoint(position.latitude ,position.longitude),
           onlineSince: DateTime.now().toString(),
           status: status,
+          isEnabled: _locations?.isEnabled,
         ).toMap()
       );
     } else {
@@ -119,10 +145,10 @@ class ScreenController extends BaseController {
           gps: _locations?.gps,
           onlineSince: DateTime.now().toString(),
           status: status,
+          isEnabled: _locations?.isEnabled,
         ).toMap()
       );
     }
-    */
   }
 
   VideoPlayerController getVideoNetwork(RxBool isVideoLoading, String source) {
@@ -157,20 +183,28 @@ class ScreenController extends BaseController {
   }
   
   Future<void> _getAdvertisements() async {
-    debugPrint("ScreenController _getAdvertisements()"); 
+    debugPrint("ScreenController _getAdvertisements() ${_locations?.isEnabled == true}"); 
     isLoading(true);
-    advertisements.clear();
-    final snapshot = await _service.getAdvertisement();
-    for (final item in snapshot) {
-      if (item.mediaType?.toLowerCase()?.contains("mp4") == true) {
-        item.isVideoLoading = false.obs;
-        item.videoPlayerController = getVideoNetwork(item.isVideoLoading!, item.mediaUrl!);
-        advertisements.add(item);
-      } else {
-        advertisements.add(item);
+    if (_locations?.isEnabled == true || (await _service.getLocationsByIdByCity(Constants.CITY)).firstOrNull?.isEnabled == true) {
+      advertisements.clear();
+      final snapshot = await _service.getAdvertisement();
+      for (final item in snapshot) {
+        if (item.mediaType?.toLowerCase()?.contains("mp4") == true) {
+          item.isVideoLoading = false.obs;
+          item.videoPlayerController = getVideoNetwork(item.isVideoLoading!, item.mediaUrl!);
+          advertisements.add(item);
+        } else {
+          advertisements.add(item);
+        }        
       }
-      
+      _startAdvertisement();
+    } else {
+      onShowAlert("Status Disabled", "This is disabled Can't show ads");
     }
+    isLoading(false);
+  }
+
+  Future<void> _startAdvertisement() async {
     debugPrint("ScreenController _getAdvertisements ${advertisements.length}");
     debugPrint("ScreenController _getAdvertisements ${advertisements}"); 
     index = 0;
@@ -187,7 +221,6 @@ class ScreenController extends BaseController {
         _nextAdvertisement();
       }
     );
-    isLoading(false);
   }
 
   Future<void> _nextAdvertisement() async {
@@ -221,7 +254,7 @@ class ScreenController extends BaseController {
   }
 
   @override
-  void onClose() {
+  Future<void> onClose() async {
     super.onClose();
     debugPrint("ScreenController onClose");
     advertisements.map( (element) {

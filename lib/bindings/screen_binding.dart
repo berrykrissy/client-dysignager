@@ -13,6 +13,7 @@ class ScreenBinding extends BaseBinding {
     Get.lazyPut<ScreenController> ( 
       () => ScreenController (
         Get.find<FirestoreService>(),
+        Get.arguments,
         //Gps(),
       )
     );

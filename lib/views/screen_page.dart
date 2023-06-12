@@ -6,7 +6,7 @@ import 'package:billboard/widgets/video_player_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class ScreenPage extends BaseView<ScreenController> {
+class ScreenPage extends BaseView<ScreenController> with WidgetsBindingObserver {
 
   const ScreenPage( {
     Key? key
@@ -14,9 +14,6 @@ class ScreenPage extends BaseView<ScreenController> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("ScreenPage build");
-    debugPrint("ScreenPage initialized ${controller.initialized}");
-    debugPrint("ScreenPage isClosed ${controller.isClosed}");
     return Obx ( () {
       if (controller.isLoading.isTrue) {
         return const Center( child: CircularProgressIndicator() );
@@ -38,26 +35,20 @@ class ScreenPage extends BaseView<ScreenController> {
         );
       }
     });
-    /*
-    return Obx ( () {
-      if (controller.observeLoading().isFalse && controller.observeIsVideo().isTrue) {
-        //return Text(controller.url.toString());
-        return VideoPlayerWidget (
-          videoController: controller.videoPlayerController,
-          isLoading: controller.observeLoading(),
-        );
-      } else if (controller.observeLoading().isFalse && controller.observeIsVideo().isFalse) {
-        //return Text(controller.url.toString());
-        return ImageWidget (
-          url: controller.url.value
-        );
-      } else {
-        return const SizedBox (
-          height: 200,
-          child: Center(child: CircularProgressIndicator()),
-        );
-      }
-    }, );
-    */
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    debugPrint("ScreenPage didChangeAppLifecycleState");
+    if (state == AppLifecycleState.detached) {
+      debugPrint("ScreenPage didChangeAppLifecycleState detached");
+    } else if (state == AppLifecycleState.paused) {
+      debugPrint("ScreenPage didChangeAppLifecycleState paused");
+    } else if (state == AppLifecycleState.inactive) {
+      debugPrint("ScreenPage didChangeAppLifecycleState inactive");
+    } else if (state == AppLifecycleState.resumed) {
+      debugPrint("ScreenPage didChangeAppLifecycleState resumed");
+    }
   }
 }

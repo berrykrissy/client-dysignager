@@ -131,7 +131,7 @@ class ScreenController extends BaseController {
           name: _locations?.name,
           address: _locations?.address,
           gps: GeoPoint(position.latitude ,position.longitude),
-          onlineSince: DateTime.now().toString(),
+          onlineSince: DateTime.now(),
           status: status,
           isEnabled: _locations?.isEnabled,
         ).toMap()
@@ -143,7 +143,7 @@ class ScreenController extends BaseController {
           name: _locations?.name,
           address: _locations?.address,
           gps: _locations?.gps,
-          onlineSince: DateTime.now().toString(),
+          onlineSince: DateTime.now(),
           status: status,
           isEnabled: _locations?.isEnabled,
         ).toMap()

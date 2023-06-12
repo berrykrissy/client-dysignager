@@ -211,13 +211,7 @@ class ScreenController extends BaseController {
     Timer.periodic (
       const Duration(seconds: 30), (timer) {
         debugPrint("ScreenController tick ${timer.tick}");
-        _updateLocation(Constants.ONLINE);
-        /*
-        if (timer.tick % 30 == 0) {
-          index++;
-          debugPrint("ScreenController tick timer.tick % 30 == 0 index $index");
-        }
-        */
+        _checkStatus();
         _nextAdvertisement();
       }
     );
@@ -225,22 +219,24 @@ class ScreenController extends BaseController {
 
   Future<void> _nextAdvertisement() async {
     debugPrint("ScreenController _nextAdvertisement()");
-    /*
-    if (advertisements.value[index].mediaType?.toLowerCase()?.contains("jpg") == true || advertisements.value[index].mediaType?.contains("png") == true || advertisements.value[index].mediaType?.toLowerCase()?.contains("webp") == true) {
-      debugPrint("ScreenController _nextAdvertisement() is Image");
-    } else {
-      debugPrint("ScreenController _nextAdvertisement() is Video");
-      videoPlayerController?.dispose;  
-      advertisements.value[index].videoPlayerController?.initialize();
-      advertisements.value[index].videoPlayerController?.play();
-    }
-    */
     debugPrint("ScreenController index ${index} advertisement ${advertisements.value[index].duration} ${advertisements.value[index].mediaType} ${advertisements.value[index].mediaUrl}");
     pageController.jumpToPage(index);
     if (index < advertisements.length - 1) {
       index++;
     } else {
       index = 0;
+    }
+  }
+
+  Future<void> _checkStatus() async {
+    //TODO: Check if Advertisement is in sync
+    //if not update status to Constants.OUT_OF_SYNC
+    //else update to online
+    if (true) {
+      _updateLocation(Constants.ONLINE);
+    } else {
+      _updateLocation(Constants.OUT_OF_SYNC);
+      onRefresh();
     }
   }
 

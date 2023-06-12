@@ -5,41 +5,90 @@ import 'package:billboard/models/locations_model.dart';
 import 'package:billboard/services/firestore/firestore_service.dart';
 import 'package:billboard/utils/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+//import 'package:mac_address/mac_address.dart';
+import "package:universal_html/html.dart" as html;
 import 'package:video_player/video_player.dart';
 
 class ScreenController extends BaseController {
   
-  ScreenController(FirestoreService this._service) {
+  ScreenController(FirestoreService this._service, arguments) {
     debugPrint("ScreenController Constructor");
+    _locations = arguments;
   }
 
   final FirestoreService _service;
   final advertisements = <AdvertisementModel>[].obs;
-  LocationsModel? _locations = null;
-
+  LocationsModel? _locations;
+  PageController pageController = new PageController(initialPage: 0);
   int index = 0;
-
-  final RxBool _isLoading = false.obs;
-  final RxBool _isVideo = false.obs;
-  final RxString url = "".obs;
-  VideoPlayerController? videoPlayerController = null;
+  final RxBool isLoading = false.obs;
 
   @override
   Future<void> onInit() async {
     super.onInit();
-    debugPrint("ScreenController onInit");
+    debugPrint("ScreenController onInit mac address");
+    //debugPrint("ScreenController mac address "); TODO: Mac Address Still can't get
     getLocation();
     _handleLocationPermission();
-    //setVideo('assets/video.mp4');
     _getAdvertisements();
+    pageController.addListener(() {
+      debugPrint("ScreenController pageController page ${pageController.page}");
+      final isPageNotNull = pageController.page?.toInt() != null;
+      final past = pageController.page!.toInt() - 1;
+      if (isPageNotNull && -1 < past ) {
+        debugPrint("ScreenController pageController pause $past");
+        advertisements.value[advertisements.length - 1].videoPlayerController?.pause();
+      } else if (isPageNotNull) {
+        debugPrint("ScreenController pageController pause ${advertisements.length - 1}");
+        advertisements.value[advertisements.length - 1].videoPlayerController?.pause();
+      }
+      final present = pageController.page!.toInt();
+      if (isPageNotNull && present < advertisements.length) {
+        debugPrint("ScreenController pageController play $present ${advertisements.value[present].mediaType}");
+        advertisements.value[present].videoPlayerController?.play();
+      } else if (isPageNotNull && advertisements.isNotEmpty) {
+        debugPrint("ScreenController pageController play 0 ${advertisements.value[0].mediaType}");
+        advertisements.value[0].videoPlayerController?.play();
+      }
+      final future = pageController.page!.toInt() + 1;
+      if (isPageNotNull && future < advertisements.length) {
+        debugPrint("ScreenController pageController initialize $future");
+        advertisements.value[future].videoPlayerController?.initialize();
+      } else if (isPageNotNull && advertisements.isNotEmpty) {
+        debugPrint("ScreenController pageController initialize 0");
+        advertisements.value[0].videoPlayerController?.initialize();
+      }
+    });
+    html.window.onBeforeUnload.listen((event) async {
+        debugPrint("ScreenController onBeforeUnload ${event}");
+        _updateLocation(Constants.OFFLINE);
+      });
+    html.window.onUnload.listen((event) async {
+      debugPrint("ScreenController onUnload ${event}");
+      advertisements.map( (element) {
+        element.videoPlayerController?.dispose();
+      } );
+    });
+  }
+
+  void onRefresh() {
+    Timer (
+      const Duration(milliseconds: 10000), ( () => html.window.location.reload() )
+    );
+  }
+
+  void onShowAlert(String title, String message) {
+    Timer(
+      const Duration(milliseconds: 2000), ( () => Get.snackbar(title, message) )
+    );
   }
 
   Future<void> getLocation() async {
     debugPrint("ScreenController getLocation");
-    final snapshot = await _service.getLocationsByIdByCity("Manila");
+    final snapshot = await _service.getLocationsByIdByCity(Constants.CITY);
     _locations = snapshot.firstOrNull;
     debugPrint("ScreenController getLocation $_locations");
   }
@@ -50,28 +99,28 @@ class ScreenController extends BaseController {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      Get.snackbar("GPS", "Location services are disabled. Please enable the services");
+      onShowAlert("GPS", "Location services are disabled. Please enable the services");
       return false;
     }
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        Get.snackbar("GPS", "Location permissions are denied");
+        onShowAlert("GPS", "Location permissions are denied");
         return false;
       }
     }
     if (permission == LocationPermission.deniedForever) {
-      Get.snackbar("GPS", "Location permissions are permanently denied, we cannot request permissions.");
+      onShowAlert("GPS", "Location permissions are permanently denied, we cannot request permissions.");
       return false;
     }
     return true;
   }
 
   Future<void> _updateLocation(String status) async {
-    debugPrint("ScreenController _updateLocation ${await _handleLocationPermission()}");
-    debugPrint("ScreenController isLocationServiceEnabled ${await Geolocator.isLocationServiceEnabled()}");
-    if (await _handleLocationPermission()) {
+    //TODO GPS Still Can't Get in Rasbian OS
+    debugPrint("ScreenController _updateLocation $status");
+    if (await _handleLocationPermission() && false) {
       Position position = await Geolocator.getCurrentPosition ( desiredAccuracy: LocationAccuracy.best);
       _service.updateLocation (
         _locations?.id, 
@@ -79,8 +128,9 @@ class ScreenController extends BaseController {
           name: _locations?.name,
           address: _locations?.address,
           gps: GeoPoint(position.latitude ,position.longitude),
-          onlineSince: DateTime.now().toString(),
+          onlineSince: DateTime.now(),
           status: status,
+          isEnabled: _locations?.isEnabled,
         ).toMap()
       );
     } else {
@@ -90,16 +140,17 @@ class ScreenController extends BaseController {
           name: _locations?.name,
           address: _locations?.address,
           gps: _locations?.gps,
-          onlineSince: DateTime.now().toString(),
+          onlineSince: DateTime.now(),
           status: status,
+          isEnabled: _locations?.isEnabled,
         ).toMap()
       );
     }
   }
 
-  void setVideoAsset(String source) {
-    debugPrint("ScreenController setVideoAsset($source)");
-    videoPlayerController = VideoPlayerController.asset(source);
+  VideoPlayerController getVideoNetwork(RxBool isVideoLoading, String source) {
+    debugPrint("ScreenController getVideoNetwork($source)");
+    final videoPlayerController = VideoPlayerController.network(source); //VideoPlayerController.asset(source);
     videoPlayerController?..addListener( () {
       debugPrint("ScreenController Listener isInitialized ${videoPlayerController?.value.isInitialized}");
       debugPrint("ScreenController Listener isPlaying ${videoPlayerController?.value.isPlaying}");
@@ -110,107 +161,89 @@ class ScreenController extends BaseController {
         videoPlayerController?.value.position ==
         videoPlayerController?.value.duration) {
         debugPrint("ScreenController Listener duration isVideo(false)");
-        _isLoading(true);
+        isVideoLoading(true);
         _nextAdvertisement();
       } else {
         debugPrint("ScreenController Listener duration isVideo(true)");
-        _isLoading(false);
+        isVideoLoading(false);
       }
     } )
     ..setLooping(false)
     ..initialize().then( (value) {
-      debugPrint("ScreenController initialize ${videoPlayerController?.value}");
-      _isLoading(true);
-      _isLoading(false);
-      return videoPlayerController?.play();
-    },
+        debugPrint("ScreenController initialize ${videoPlayerController?.value}");
+        //isVideoLoading(true);
+        //isVideoLoading(false);
+        //return videoPlayerController?.play();
+      },
     );
-  }
-
-  void setVideoNetwork(String source) {
-    debugPrint("ScreenController setVideoNetwork($source)");
-    videoPlayerController = VideoPlayerController.network(source);
-    videoPlayerController?..addListener( () {
-      debugPrint("ScreenController Listener isInitialized ${videoPlayerController?.value.isInitialized}");
-      debugPrint("ScreenController Listener isPlaying ${videoPlayerController?.value.isPlaying}");
-      debugPrint("ScreenController Listener duration  ${videoPlayerController?.value.duration}");
-      debugPrint("ScreenController Listener position ${videoPlayerController?.value.position}");
-      if (videoPlayerController?.value.isInitialized == true &&
-        videoPlayerController?.value.isPlaying == false &&
-        videoPlayerController?.value.position ==
-        videoPlayerController?.value.duration) {
-        debugPrint("ScreenController Listener duration isVideo(false)");
-        _isLoading(true);
-        _nextAdvertisement();
-      } else {
-        debugPrint("ScreenController Listener duration isVideo(true)");
-        _isLoading(false);
-      }
-    } )
-    ..setLooping(false)
-    ..initialize().then( (value) {
-      debugPrint("ScreenController initialize ${videoPlayerController?.value}");
-      _isLoading(true);
-      _isLoading(false);
-      return videoPlayerController?.play();
-    },
-    );
-  }
-
-  bool isVideoMuted() {
-    return videoPlayerController?.value.volume == 0;
-  }
-
-  RxBool observeLoading() {
-    return _isLoading;
-  }
-
-  RxBool observeIsVideo() {
-    return _isVideo;
+    return videoPlayerController;
   }
   
   Future<void> _getAdvertisements() async {
-    final snapshot = await _service.getAdvertisement();
-    for (final item in snapshot) {
-      advertisements.add(item);
+    debugPrint("ScreenController _getAdvertisements() ${_locations?.isEnabled == true}"); 
+    isLoading(true);
+    if (_locations?.isEnabled == true || (await _service.getLocationsByIdByCity(Constants.CITY)).firstOrNull?.isEnabled == true) {
+      advertisements.clear();
+      final snapshot = await _service.getAdvertisement();
+      for (final item in snapshot) {
+        if (item.mediaType?.toLowerCase()?.contains("mp4") == true) {
+          item.isVideoLoading = false.obs;
+          item.videoPlayerController = getVideoNetwork(item.isVideoLoading!, item.mediaUrl!);
+          advertisements.add(item);
+        } else {
+          advertisements.add(item);
+        }        
+      }
+      _startAdvertisement();
+    } else {
+      onShowAlert("Status Disabled", "This is disabled Can't show ads");
     }
-    debugPrint("ScreenController _getAdvertisements ${advertisements.length}");
+    isLoading(false);
+  }
+
+  Future<void> _startAdvertisement() async {
+    debugPrint("ScreenController _startAdvertisement ${advertisements.length}");
+    debugPrint("ScreenController _startAdvertisement ${advertisements}"); 
     index = 0;
     Timer.periodic (
       const Duration(seconds: 30), (timer) {
         debugPrint("ScreenController tick ${timer.tick}");
-        _updateLocation(Constants.ONLINE);
-        _isLoading(true);
-        /*
-        if (timer.tick % 30 == 0) {
-          index++;
-          debugPrint("ScreenController tick timer.tick % 30 == 0 index $index");
-        }
-        */
+        _checkStatus();
         _nextAdvertisement();
-        _isLoading(false);
       }
     );
   }
 
   Future<void> _nextAdvertisement() async {
     debugPrint("ScreenController _nextAdvertisement()");
-    if (advertisements.length - 1 < index) {
+    debugPrint("ScreenController index ${index} advertisement ${advertisements.value[index].duration} ${advertisements.value[index].mediaType} ${advertisements.value[index].mediaUrl}");
+    pageController.jumpToPage(index);
+    if (index < advertisements.length - 1) {
+      index++;
+    } else {
       index = 0;
     }
-    if (advertisements.value[index].mediaType?.toLowerCase()?.contains("jpg") == true || advertisements.value[index].mediaType?.contains("png") == true || advertisements.value[index].mediaType?.toLowerCase()?.contains("webp") == true) {
-      url(advertisements?.value[index]?.mediaUrl);
-      _isVideo(false);
-      videoPlayerController?.pause();
-    } else {
-      videoPlayerController?.dispose;
-        url(advertisements?.value[index]?.mediaUrl);
-      _isVideo(true);
-      setVideoNetwork(advertisements.value[index].mediaUrl ?? "");
-      videoPlayerController?.play();
+  }
+
+  Future<void> _checkStatus() async {
+    final snapshot = await _service.getAdvertisement();
+    final isSizeSame = snapshot.length == advertisements.length;
+    bool? sameContents = null;
+    for (var newItem in snapshot) { 
+      if (!isSizeSame || advertisements.where((oldItem) => oldItem.mediaUrl == newItem.mediaUrl ).isEmpty) {
+        sameContents = false;
+        break;
+      } else {
+        sameContents = true;
+      }
     }
-    debugPrint("ScreenController index ${index} advertisement ${advertisements.value[index].duration} ${advertisements.value[index].mediaType} ${advertisements.value[index].mediaUrl}");
-    index++;
+    debugPrint("ScreenController _checkStatus isSizeSame $isSizeSame sameContents $sameContents");
+    if (isSizeSame && sameContents == true) {
+      _updateLocation(Constants.ONLINE);
+    } else {
+      _updateLocation(Constants.OUT_OF_SYNC);
+      onRefresh();
+    }
   }
 
   @override
@@ -223,10 +256,12 @@ class ScreenController extends BaseController {
   }
 
   @override
-  void onClose() {
+  Future<void> onClose() async {
     super.onClose();
     debugPrint("ScreenController onClose");
-    videoPlayerController?.dispose();
+    advertisements.map( (element) {
+      element.videoPlayerController?.dispose();
+    } );
     _updateLocation(Constants.OFFLINE);
   }
 }

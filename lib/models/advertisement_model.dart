@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
+import 'package:video_player/video_player.dart';
 
 class AdvertisementModel {
   String? id; //documentID
@@ -9,6 +11,8 @@ class AdvertisementModel {
   DateTime? startDate;
   DateTime? endDate;
   int? duration;
+  RxBool? isVideoLoading;
+  VideoPlayerController? videoPlayerController;
 
   AdvertisementModel( {
     this.id,
@@ -19,6 +23,8 @@ class AdvertisementModel {
     this.startDate,
     this.endDate,
     this.duration,
+    this.isVideoLoading,
+    this.videoPlayerController,
   } );
 
   Map<String, dynamic> toMap() => {

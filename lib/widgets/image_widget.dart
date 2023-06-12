@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class ImageWidget extends BaseWidget {
   
-  ImageWidget( {
+  ImageWidget ( {
     super.key,
     this.url,
   } );

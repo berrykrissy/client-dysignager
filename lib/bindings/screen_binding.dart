@@ -1,7 +1,9 @@
 import 'package:billboard/bindings/base_binding.dart';
 import 'package:billboard/controllers/screen_controller.dart';
+import 'package:billboard/services/firestore/firestore_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+//import 'package:gps/gps.dart';
 
 class ScreenBinding extends BaseBinding {
 
@@ -9,8 +11,10 @@ class ScreenBinding extends BaseBinding {
   void dependencies() {
     debugPrint("SplashBinding dependencies");
     Get.lazyPut<ScreenController> ( 
-      () => ScreenController(
-        
+      () => ScreenController (
+        Get.find<FirestoreService>(),
+        Get.arguments,
+        //Gps(),
       )
     );
   }
